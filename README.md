@@ -16,13 +16,15 @@
 
 ## 如何安装
 
-将项目检出到本地，执行安装命令。
+将项目检出到本地，执行安装命令，之后打开浏览器访问 http://127.0.0.1:3000。
 
 ```bash
 $ git clone git@github.com:Rockcookies/hqy-react-boilerplate.git
 $ npm install
 $ npm run serve
 ```
+
+
 
 强烈建议使用 yarn 替换 npm 作为包管理器，具体可移步 [快速、可靠、安全的依赖管理 - YARN](https://yarnpkg.com)。
 
