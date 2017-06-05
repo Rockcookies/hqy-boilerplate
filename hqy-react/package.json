@@ -7,12 +7,11 @@
 	},
 
 	"scripts": {
-		"build": "better-npm-run build",
-		"deploy": "better-npm-run deploy",
-		"pack": "better-npm-run build && better-npm-run deploy",
-		"watch": "better-npm-run watch --debug=true",
-		"serve": "better-npm-run serve --debug=true",
-		"test": "better-npm-run deploy --dest=public --debug=true --compile=css_minify,js_minify",
+		"build": "bnr build",
+		"deploy": "bnr deploy",
+		"pack": "bnr build && bnr deploy",
+		"watch": "bnr watch --debug=true",
+		"serve": "bnr serve --debug=true",
 		"lint": "eslint ."
 	},
 
