@@ -145,7 +145,3 @@ npm run serve -- --compile=css_minify,js_minify
 ```bash
 npm run deploy -- --debug=true
 ```
-
-## License
-
-This project is licensed under the MIT license, Copyright (c) 2017 RockCookies. For more information see LICENSE.md.
