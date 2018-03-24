@@ -1,56 +1,34 @@
-// http://eslint.org/docs/user-guide/configuring
+// https://eslint.org/docs/user-guide/configuring
 
 module.exports = {
 	root: true,
-	parser: 'babel-eslint',
 	parserOptions: {
-		sourceType: 'module'
+		parser: 'babel-eslint'
 	},
 	env: {
 		browser: true,
 	},
-	extends: 'airbnb-base',
+	extends: [
+		// https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
+		// consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
+		'plugin:vue/essential',
+		// https://github.com/standard/standard/blob/master/docs/RULES-en.md
+		'standard'
+	],
 	// required to lint *.vue files
 	plugins: [
-	'html'
+		'vue'
 	],
-	// check if imports actually resolve
-	'settings': {
-		'import/resolver': {
-			'webpack': {
-				'config': 'build/webpack.base.conf.js'
-			}
-		}
-	},
 	// add your custom rules here
-	'rules': {
-		"import/no-unresolved": 0,
-		"import/prefer-default-export": 0,
-		// don't require .vue extension when importing
-		'import/extensions': 0,
-		// allow optionalDependencies
-		'import/no-extraneous-dependencies': ['error', {
-			'optionalDependencies': ['test/unit/index.js']
-		}],
+	rules: {
+		// allow async-await
+		'generator-star-spacing': 'off',
 		// allow debugger during development
-		'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
-		"no-tabs": 0,
-		"indent": [1, "tab"],
-		"no-unused-vars": 1,
-		"no-cond-assign": 0,
-		"no-else-return": 0,
-		"object-shorthand": 0,
-		"comma-dangle": 0,
-		"no-undef": 0,
-		"no-restricted-syntax": 0,
-		"no-underscore-dangle": 0,
-		"global-require": 0,
-		"prefer-const": 1,
-		"consistent-return": 0,
-		"max-len": [1, {"code": 200, "tabWidth": 4, "ignoreUrls": true}],
-		"no-param-reassign": 0,
-		"func-names": 0,
-		"arrow-parens": 0,
-		"generator-star-spacing": 0
+		'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+		'no-tabs': 0,
+		'indent': [1, 'tab'],
+		'semi': ['error', 'always'],
+		'no-unused-vars': 1,
+		'space-before-function-paren': ['error', 'never']
 	}
 }

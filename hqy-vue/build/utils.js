@@ -1,30 +1,38 @@
-/* eslint-disable */
-var path = require('path');
-var config = require('../config');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+'use strict'
+const path = require('path')
+const config = require('../config')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const packageConfig = require('../package.json')
 
 exports.assetsPath = function (_path) {
-  var assetsSubDirectory = process.env.NODE_ENV === 'production'
-    ? config.build.assetsSubDirectory
-    : config.dev.assetsSubDirectory;
-  return path.posix.join(assetsSubDirectory, _path)
+	const assetsSubDirectory = process.env.NODE_ENV === 'production'
+		? config.build.assetsSubDirectory
+		: config.dev.assetsSubDirectory
+
+	return path.posix.join(assetsSubDirectory, _path)
 }
 
 exports.cssLoaders = function (options) {
 	options = options || {}
 
-	var cssLoader = {
+	const cssLoader = {
 		loader: 'css-loader',
 		options: {
-			minimize: process.env.NODE_ENV === 'production',
+			sourceMap: options.sourceMap
+		}
+	}
+
+	const postcssLoader = {
+		loader: 'postcss-loader',
+		options: {
 			sourceMap: options.sourceMap
 		}
 	}
 
 	// generate loader string to be used with extract text plugin
-	function generateLoaders (loader, loaderOptions) {
-		var loaders = [cssLoader]
+	function generateLoaders(loader, loaderOptions) {
+		const loaders = options.usePostCSS ? [cssLoader, postcssLoader] : [cssLoader]
+
 		if (loader) {
 			loaders.push({
 				loader: loader + '-loader',
@@ -60,74 +68,34 @@ exports.cssLoaders = function (options) {
 
 // Generate loaders for standalone style files (outside of .vue)
 exports.styleLoaders = function (options) {
-	var output = []
-	var loaders = exports.cssLoaders(options)
-	for (var extension in loaders) {
-		var loader = loaders[extension]
+	const output = []
+	const loaders = exports.cssLoaders(options)
+
+	for (const extension in loaders) {
+		const loader = loaders[extension]
 		output.push({
 			test: new RegExp('\\.' + extension + '$'),
 			use: loader
 		})
 	}
+
 	return output
 }
 
-exports.getEntries = function () {
-	var entries = {};
+exports.createNotifierCallback = () => {
+	const notifier = require('node-notifier')
 
-	Object.keys(config.build.entries).forEach((name) => {
-		entries[name] = config.build.entries[name].path;
-	});
+	return (severity, errors) => {
+		if (severity !== 'error') return
 
-	return entries;
+		const error = errors[0]
+		const filename = error.file && error.file.split('!').pop()
 
-	//var entries = {};
-
-	// var glob = require('glob');
-	// glob.sync('src/**/*.main.js').forEach(function (name) {
-	// 	var key = path.relative('src', path.resolve(name)).replace(/\\/g, '/');
-	// 	var suffix = '';
-
-	// 	key = key.replace(/\.(main).js$/, ($1, $2) => {
-	// 		suffix = `.${$2}`;
-	// 		return '';
-	// 	});
-
-	// 	entries[key] = `./src/${key}${suffix}.js`;
-	// });
-
-	// return entries;
-};
-
-exports.getHtmlPlugins = function (conf) {
-	var plugins = [];
-	var entries = config.build.entries;
-
-	Object.keys(entries).forEach((name) => {
-		var entry = entries[name];
-		var options = Object.assign({}, conf || {}, entry.html);
-
-		plugins.push(new HtmlWebpackPlugin(options));
-	});
-
-	return plugins;
-
-	/* var entries = getEntries();
-	var plugins = [];
-
-	Object.keys(entries).forEach((name) => {
-		var pagePath = name.replace(/\\/g, '/');
-
-		var conf = {
-			__name__: name,
-			filename: `${pagePath}.html`, // output path
-			template: `src/${pagePath}.main.html`,
-			inject: true,
-			excludeChunks: Object.keys(entries).filter(_name => (_name != name))
-		};
-
-		plugins.push(conf);
-	});
-
-	return plugins;*/
-};
+		notifier.notify({
+			title: packageConfig.name,
+			message: severity + ': ' + error.name,
+			subtitle: filename || '',
+			icon: path.join(__dirname, 'logo.png')
+		})
+	}
+}
