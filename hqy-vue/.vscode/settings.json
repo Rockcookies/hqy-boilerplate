@@ -1,0 +1,17 @@
+{
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"html",
+		"vue",
+		{
+			"language": "vue",
+			"autoFix": true
+		}
+	],
+	"vetur.validation.template": true,
+	"files.exclude": {
+		"yarn.lock": true,
+		".postcssrc.js": true
+	}
+}

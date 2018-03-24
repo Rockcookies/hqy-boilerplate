@@ -2,6 +2,7 @@
 const path = require('path')
 const config = require('../config')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 const packageConfig = require('../package.json')
 
 exports.assetsPath = function (_path) {
@@ -58,7 +59,7 @@ exports.cssLoaders = function (options) {
 	return {
 		css: generateLoaders(),
 		postcss: generateLoaders(),
-		less: generateLoaders('less'),
+		less: generateLoaders('less', { javascriptEnabled: true }),
 		sass: generateLoaders('sass', { indentedSyntax: true }),
 		scss: generateLoaders('sass'),
 		stylus: generateLoaders('stylus'),
@@ -99,3 +100,28 @@ exports.createNotifierCallback = () => {
 		})
 	}
 }
+
+exports.getEntries = function () {
+	var entries = {};
+
+	Object.keys(config.build.entries).forEach((name) => {
+		entries[name] = config.build.entries[name].path;
+	});
+
+	return entries;
+}
+
+exports.getHtmlPlugins = function (conf) {
+	var plugins = [];
+	var entries = config.build.entries;
+
+	Object.keys(entries).forEach((name) => {
+		var entry = entries[name];
+		var options = Object.assign({}, conf || {}, entry.html);
+
+		plugins.push(new HtmlWebpackPlugin(options));
+	});
+
+	return plugins;
+}
+

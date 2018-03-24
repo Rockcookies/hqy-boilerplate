@@ -6,7 +6,6 @@ const merge = require('webpack-merge')
 const path = require('path')
 const baseWebpackConfig = require('./webpack.base.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
 
@@ -32,6 +31,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 		contentBase: false, // since we use CopyWebpackPlugin.
 		compress: true,
 		host: HOST || config.dev.host,
+		disableHostCheck: (HOST || config.dev.host) == null || (HOST || config.dev.host) == '0.0.0.0',
 		port: PORT || config.dev.port,
 		open: config.dev.autoOpenBrowser,
 		overlay: config.dev.errorOverlay
@@ -52,9 +52,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 		new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
 		new webpack.NoEmitOnErrorsPlugin(),
 		// https://github.com/ampedandwired/html-webpack-plugin
-		new HtmlWebpackPlugin({
-			filename: 'index.html',
-			template: 'index.html',
+		...utils.getHtmlPlugins({
 			inject: true
 		}),
 		// copy custom static assets
@@ -65,7 +63,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 				ignore: ['.*']
 			}
 		])
-	]
+	],
+	resolve: { alias: config.dev.resolveAlias }
 })
 
 module.exports = new Promise((resolve, reject) => {

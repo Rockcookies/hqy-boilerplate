@@ -3,6 +3,13 @@
 // see http://vuejs-templates.github.io/webpack for documentation.
 
 const path = require('path')
+const helper = require('./config-helper')
+const APP_ENV = process.env.APP_ENV || 'local'
+
+const defs = {
+	APP_ENV,
+	API_PATH: APP_ENV === 'local' ? '/mockdata' : '/api'
+};
 
 module.exports = {
 	dev: {
@@ -13,8 +20,8 @@ module.exports = {
 		proxyTable: {},
 
 		// Various Dev Server settings
-		host: 'localhost', // can be overwritten by process.env.HOST
-		port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+		host: '0.0.0.0', // can be overwritten by process.env.HOST
+		port: 3000, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
 		autoOpenBrowser: false,
 		errorOverlay: true,
 		notifyOnErrors: true,
@@ -23,7 +30,7 @@ module.exports = {
 		// Use Eslint Loader?
 		// If true, your code will be linted during bundling and
 		// linting errors and warnings will be shown in the console.
-		useEslint: true,
+		useEslint: false,
 		// If true, eslint errors and warnings will also be shown in the error overlay
 		// in the browser.
 		showEslintErrorsInOverlay: false,
@@ -40,15 +47,25 @@ module.exports = {
 		// https://vue-loader.vuejs.org/en/options.html#cachebusting
 		cacheBusting: true,
 
-		cssSourceMap: true
+		cssSourceMap: true,
+
+		// 定义变量
+		define: helper.mergeDefs(defs),
+
+		// 定义别名
+		resolveAlias: {
+			'app-env': helper.resolveSrc('commons/app-env.dev.js')
+		}
 	},
 
 	build: {
 		// Template for index.html
-		index: path.resolve(__dirname, '../dist/index.html'),
+		entries: helper.parseEntries([
+			'index'
+		]),
 
 		// Paths
-		assetsRoot: path.resolve(__dirname, '../dist'),
+		assetsRoot: path.resolve(__dirname, '../.temp'),
 		assetsSubDirectory: 'static',
 		assetsPublicPath: '/',
 
@@ -71,6 +88,14 @@ module.exports = {
 		// View the bundle analyzer report after build finishes:
 		// `npm run build --report`
 		// Set to `true` or `false` to always turn it on or off
-		bundleAnalyzerReport: process.env.npm_config_report
+		bundleAnalyzerReport: process.env.npm_config_report,
+
+		// 定义变量
+		define: helper.mergeDefs(defs),
+
+		// 定义别名
+		resolveAlias: {
+			'app-env': helper.resolveSrc('commons/app-env.prod.js')
+		}
 	}
 }
