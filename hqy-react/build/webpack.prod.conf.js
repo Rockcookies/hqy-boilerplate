@@ -17,7 +17,8 @@ const webpackConfig = merge(baseWebpackConfig, {
 		rules: utils.styleLoaders({
 			sourceMap: config.build.productionSourceMap,
 			extract: true,
-			usePostCSS: true
+			usePostCSS: true,
+			cssModules: true
 		})
 	},
 	devtool: config.build.productionSourceMap ? config.build.devtool : false,
@@ -27,9 +28,8 @@ const webpackConfig = merge(baseWebpackConfig, {
 		chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
 	},
 	plugins: [
-		// http://vuejs.github.io/vue-loader/en/workflow/production.html
 		new webpack.DefinePlugin({
-			'process.env': env
+			'process.env': require('../config/prod.env')
 		}),
 		new UglifyJsPlugin({
 			uglifyOptions: {
@@ -77,7 +77,7 @@ const webpackConfig = merge(baseWebpackConfig, {
 		new webpack.optimize.ModuleConcatenationPlugin(),
 		// split vendor js into its own file
 		new webpack.optimize.CommonsChunkPlugin({
-			name: 'vendor',
+			name: 'commons',
 			minChunks(module) {
 				// any required modules inside node_modules are extracted to vendor
 				return (
@@ -100,7 +100,7 @@ const webpackConfig = merge(baseWebpackConfig, {
 		// see: https://webpack.js.org/plugins/commons-chunk-plugin/#extra-async-commons-chunk
 		new webpack.optimize.CommonsChunkPlugin({
 			name: 'app',
-			async: 'vendor-async',
+			async: 'commons-async',
 			children: true,
 			minChunks: 3
 		}),

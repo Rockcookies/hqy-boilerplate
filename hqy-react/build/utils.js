@@ -5,21 +5,28 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const packageConfig = require('../package.json')
 
+const IS_PROD = process.env.NODE_ENV === 'production'
+
 exports.assetsPath = function (_path) {
-	const assetsSubDirectory = process.env.NODE_ENV === 'production'
+	const assetsSubDirectory = IS_PROD
 		? config.build.assetsSubDirectory
 		: config.dev.assetsSubDirectory
 
 	return path.posix.join(assetsSubDirectory, _path)
 }
 
-exports.cssLoaders = function (options) {
+function cssLoaders(name, options, loaderOptions) {
 	options = options || {}
 
 	const cssLoader = {
 		loader: 'css-loader',
 		options: {
-			sourceMap: options.sourceMap
+			importLoaders: 1,
+			sourceMap: options.sourceMap,
+			...(options.cssModules ? {
+				modules: true,
+				localIdentName: IS_PROD ? '[local]___[hash:base64:5]' : '[name]__[local]___[hash:base64:5]'
+			} : {})
 		}
 	}
 
@@ -30,57 +37,71 @@ exports.cssLoaders = function (options) {
 		}
 	}
 
-	// generate loader string to be used with extract text plugin
-	function generateLoaders(loader, loaderOptions) {
-		const loaders = options.usePostCSS ? [cssLoader, postcssLoader] : [cssLoader]
+	const loaders = options.extract ? [cssLoader] : ['style-loader', cssLoader]
 
-		if (loader) {
-			loaders.push({
-				loader: loader + '-loader',
-				options: Object.assign({}, loaderOptions, {
-					sourceMap: options.sourceMap
-				})
-			})
-		}
-
-		// Extract CSS when that option is specified
-		// (which is the case during production build)
-		if (options.extract) {
-			return ExtractTextPlugin.extract({
-				use: loaders,
-				fallback: 'vue-style-loader'
-			})
-		} else {
-			return ['vue-style-loader'].concat(loaders)
-		}
+	if (options.usePostCSS) {
+		loaders.push(postcssLoader)
 	}
 
-	// https://vue-loader.vuejs.org/en/configurations/extract-css.html
-	return {
-		css: generateLoaders(),
-		postcss: generateLoaders(),
-		less: generateLoaders('less', { javascriptEnabled: true }),
-		sass: generateLoaders('sass', { indentedSyntax: true }),
-		scss: generateLoaders('sass'),
-		stylus: generateLoaders('stylus'),
-		styl: generateLoaders('stylus')
+	if (name !== 'css') {
+		loaders.push({
+			loader: name + '-loader',
+			options: {
+				...loaderOptions,
+				sourceMap: options.sourceMap
+			}
+		})
+	}
+
+	// Extract CSS when that option is specified
+	// (which is the case during production build)
+	if (options.extract) {
+		return ExtractTextPlugin.extract({
+			use: loaders,
+			fallback: 'style-loader'
+		})
+	} else {
+		return loaders
 	}
 }
 
 // Generate loaders for standalone style files (outside of .vue)
 exports.styleLoaders = function (options) {
-	const output = []
-	const loaders = exports.cssLoaders(options)
+	function exclude(filePath) {
+		if (/node_modules/.test(filePath)) {
+			return true;
+		}
 
-	for (const extension in loaders) {
-		const loader = loaders[extension]
-		output.push({
-			test: new RegExp('\\.' + extension + '$'),
-			use: loader
-		})
+		return false;
 	}
 
-	return output
+	return [{
+		test: /\.css$/,
+		exclude,
+		use: cssLoaders('css', options)
+	}, {
+		test: /\.css$/,
+		include: /node_modules/,
+		use: cssLoaders('css', {
+			...options,
+			cssModules: false
+		})
+	}, {
+		test: /\.less$/,
+		exclude,
+		use: cssLoaders('less', options, {
+			javascriptEnabled: true
+		})
+	}, {
+		test: /\.less$/,
+		include: /node_modules/,
+		use: cssLoaders('less', {
+			...options,
+			cssModules: false
+		}, {
+			javascriptEnabled: true
+		})
+	}]
 }
 
 exports.createNotifierCallback = () => {

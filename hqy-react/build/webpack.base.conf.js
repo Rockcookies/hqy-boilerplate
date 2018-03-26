@@ -1,15 +1,16 @@
 'use strict'
 const path = require('path')
 const utils = require('./utils')
+const webpack = require('webpack')
 const config = require('../config')
-const vueLoaderConfig = require('./vue-loader.conf')
+const pkg = require('../package.json')
 
 function resolve(dir) {
 	return path.join(__dirname, '..', dir)
 }
 
 const createLintingRule = () => ({
-	test: /\.(js|vue)$/,
+	test: /\.(js|jsx)$/,
 	loader: 'eslint-loader',
 	enforce: 'pre',
 	include: [resolve('src'), resolve('test')],
@@ -30,24 +31,33 @@ module.exports = {
 			: config.dev.assetsPublicPath
 	},
 	resolve: {
-		extensions: ['.js', '.vue', '.json'],
+		extensions: ['.js', '.jsx', '.json'],
 		alias: {
-			'vue$': 'vue/dist/vue.esm.js',
-			'@': resolve('src'),
+			// '@': resolve('src'),
 		}
 	},
 	module: {
 		rules: [
 			...(config.dev.useEslint ? [createLintingRule()] : []),
 			{
-				test: /\.vue$/,
-				loader: 'vue-loader',
-				options: vueLoaderConfig
-			},
-			{
-				test: /\.js$/,
+				test: /\.(js|jsx)$/,
 				loader: 'babel-loader',
-				include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
+				include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')],
+				options: {
+					cacheDirectory: false,
+					presets: [
+						['env', {
+							modules: false,
+							targets: { browsers: pkg.browserslist }
+						}],
+						'stage-2',
+						'react'
+					],
+					plugins: [
+						'transform-runtime',
+						['import', { libraryName: 'antd', libraryDirectory: 'es', style: true }]
+					]
+				}
 			},
 			{
 				test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -86,5 +96,8 @@ module.exports = {
 		net: 'empty',
 		tls: 'empty',
 		child_process: 'empty'
-	}
+	},
+	plugins: [
+		new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
+	]
 }

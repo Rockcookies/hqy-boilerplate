@@ -1,0 +1,18 @@
+@import "./mixins.less";
+
+body {
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+:global(#app) {
+	.nested-reset();
+
+	:global {
+		@import "./utils.less";
+		@import "./base/color.less";
+		@import "./base/border.less";
+		@import "./base/spacing.less";
+	}
+}
