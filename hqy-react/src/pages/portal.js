@@ -6,5 +6,5 @@ import Portal from '../routes/Portal.jsx';
 
 ReactDOM.render(
 	<Portal />,
-	document.getElementById('app')
+	document.getElementById('root')
 );

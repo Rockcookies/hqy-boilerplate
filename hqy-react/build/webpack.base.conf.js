@@ -20,9 +20,8 @@ const createLintingRule = () => ({
 	}
 })
 
-module.exports = {
+module.exports = ({ extraBabelPlugins = [] }) => ({
 	context: path.resolve(__dirname, '../'),
-	entry: utils.getEntries(),
 	output: {
 		path: config.build.assetsRoot,
 		filename: '[name].js',
@@ -32,9 +31,7 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['.js', '.jsx', '.json'],
-		alias: {
-			// '@': resolve('src'),
-		}
+		alias: {}
 	},
 	module: {
 		rules: [
@@ -55,7 +52,7 @@ module.exports = {
 					],
 					plugins: [
 						'transform-runtime',
-						['import', { libraryName: 'antd', libraryDirectory: 'es', style: true }]
+						...extraBabelPlugins
 					]
 				}
 			},
@@ -100,4 +97,4 @@ module.exports = {
 	plugins: [
 		new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
 	]
-}
+})

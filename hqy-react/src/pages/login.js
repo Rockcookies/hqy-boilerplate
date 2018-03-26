@@ -6,5 +6,9 @@ import Login from '../routes/Login.jsx';
 
 ReactDOM.render(
 	<Login />,
-	document.getElementById('app')
+	document.getElementById('root')
 );
+
+if (module.hot) {
+	module.hot.accept();
+}

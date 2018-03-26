@@ -12,7 +12,10 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const env = require('../config/prod.env')
 
-const webpackConfig = merge(baseWebpackConfig, {
+const webpackConfig = merge(baseWebpackConfig({
+	extraBabelPlugins: config.build.extraBabelPlugins
+}), {
+	entry: utils.getEntries(),
 	module: {
 		rules: utils.styleLoaders({
 			sourceMap: config.build.productionSourceMap,

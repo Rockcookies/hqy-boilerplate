@@ -11,6 +11,10 @@ const defs = {
 	API_PATH: APP_ENV === 'local' ? '/mockdata' : '/api'
 };
 
+const extraBabelPlugins = [
+	['import', { libraryName: 'antd', libraryDirectory: 'es', style: true }]
+]
+
 module.exports = {
 	dev: {
 
@@ -45,6 +49,11 @@ module.exports = {
 		cssSourceMap: true,
 
 		cssModules: true,
+
+		extraBabelPlugins: [
+			...extraBabelPlugins,
+			'dva-hmr'
+		],
 
 		// 定义变量
 		define: helper.mergeDefs(defs),
@@ -89,6 +98,8 @@ module.exports = {
 		// `npm run build --report`
 		// Set to `true` or `false` to always turn it on or off
 		bundleAnalyzerReport: process.env.npm_config_report,
+
+		extraBabelPlugins,
 
 		// 定义变量
 		define: helper.mergeDefs(defs),

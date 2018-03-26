@@ -4,11 +4,10 @@ const config = require('../config')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const packageConfig = require('../package.json')
-
-const IS_PROD = process.env.NODE_ENV === 'production'
+const webpackHotDevClient = require.resolve('react-dev-utils/webpackHotDevClient')
 
 exports.assetsPath = function (_path) {
-	const assetsSubDirectory = IS_PROD
+	const assetsSubDirectory = process.env.NODE_ENV === 'production'
 		? config.build.assetsSubDirectory
 		: config.dev.assetsSubDirectory
 
@@ -25,7 +24,7 @@ function cssLoaders(name, options, loaderOptions) {
 			sourceMap: options.sourceMap,
 			...(options.cssModules ? {
 				modules: true,
-				localIdentName: IS_PROD ? '[local]___[hash:base64:5]' : '[name]__[local]___[hash:base64:5]'
+				localIdentName: process.env.NODE_ENV === 'production' ? '[local]___[hash:base64:5]' : '[name]__[local]___[hash:base64:5]'
 			} : {})
 		}
 	}
@@ -122,23 +121,25 @@ exports.createNotifierCallback = () => {
 	}
 }
 
-exports.getEntries = function () {
-	var entries = {};
+exports.getEntries = function (options) {
+	options = options || {}
+	const entries = {};
 
 	Object.keys(config.build.entries).forEach((name) => {
-		entries[name] = config.build.entries[name].path;
+		const entryPath = config.build.entries[name].path;
+		entries[name] = options.hmr ? [webpackHotDevClient, entryPath] : entryPath;
 	});
 
 	return entries;
 }
 
 exports.getHtmlPlugins = function (conf) {
-	var plugins = [];
-	var entries = config.build.entries;
+	const plugins = [];
+	const entries = config.build.entries;
 
 	Object.keys(entries).forEach((name) => {
-		var entry = entries[name];
-		var options = Object.assign({}, conf || {}, entry.html);
+		const entry = entries[name];
+		const options = Object.assign({}, conf || {}, entry.html);
 
 		plugins.push(new HtmlWebpackPlugin(options));
 	});

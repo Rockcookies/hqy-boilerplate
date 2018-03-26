@@ -8,7 +8,7 @@ export default class Login extends React.PureComponent {
 		return (
 			<div className={styles.xxa}>
 				<div className={styles.xxx}>
-					<p className={styles.x1}><Button>fuck</Button></p>
+					<p className={styles.x1}><Button>fuck4</Button></p>
 					<div className={styles.x1}><Spin /></div>
 				</div>
 			</div>
