@@ -1,19 +1,14 @@
-const config = require('./config');
+/* eslint-disable operator-linebreak */
+const appConfig = require('./app-config');
+const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const paths = require('./paths');
-const tsImportPluginFactory = require('ts-import-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const autoprefixer = require('autoprefixer')({
-	browsers: [
-		'>1%',
-		'last 4 versions',
-		'Firefox ESR',
-		'not ie < 9', // React doesn't support IE8 anyway
-	],
-	flexbox: 'no-2009',
+	browsers: appConfig.browserslist,
+	flexbox: 'no-2009'
 });
 
-const precss = require('precss')();
 const flexBugFixes = require('postcss-flexbugs-fixes')();
 
 // Webpack uses `publicPath` to determine where the app is being served from.
@@ -23,7 +18,7 @@ const publicPath = paths.servedPath;
 // For these, "homepage" can be set to "." to enable relative asset paths.
 const shouldUseRelativeAssetPaths = publicPath === './';
 // Source maps are resource heavy and can cause out of memory issue for large source files.
-const shouldUseSourceMap = config.productionSourceMap;
+const shouldUseSourceMap = appConfig.productionSourceMap;
 
 // Note: defined here because it will be used more than once.
 const cssFilename = 'static/css/[name].[contenthash:8].css';
@@ -37,52 +32,49 @@ const extractTextPluginOptions = shouldUseRelativeAssetPaths
 	{ publicPath: Array(cssFilename.split('/').length).join('../') }
 	: {};
 
+// eslint loader
+// TODO: Disable require.ensure as it's not a standard language feature.
+// We are waiting for https://github.com/facebookincubator/create-react-app/issues/2176.
+// { parser: { requireEnsure: false } },
 
-// "url" loader works like "file" loader except that it embeds assets
-// smaller than specified limit in bytes as data URLs to avoid requests.
-// A missing `test` is equivalent to a match.
-const urlLoader = {
-	test: /\.(bmp|png|jpe?g|gif|svg|mp4|webm|ogg|mp3|wav|flac|aac|woff2?|eot|ttf|otf)(\?.*)?$/,
-	loader: require.resolve('url-loader'),
-	options: {
-		limit: 10000,
-		name: 'static/media/[name].[hash:8].[ext]',
-	},
+// First, run the linter.
+// It's important to do this before Babel processes the JS.
+const eslintLoaderDev = appConfig.useEslint && {
+	test: /\.(js|jsx|mjs)$/,
+	enforce: 'pre',
+	use: [
+		{
+			options: {
+				formatter: eslintFormatter,
+				eslintPath: require.resolve('eslint'),
+				emitWarning: true
+			},
+			loader: require.resolve('eslint-loader')
+		}
+	],
+	include: paths.appSrc
 };
+const eslintLoaderProd = eslintLoaderDev;
 
 // js loader
-const jsLoader = {
+const jsLoaderDev = {
 	test: /\.(js|jsx|mjs)$/,
 	include: paths.appSrc,
 	loader: require.resolve('babel-loader'),
 	options: {
-		// @remove-on-eject-begin
+		// This is a feature of `babel-loader` for webpack (not Babel itself).
+		// It enables caching results in ./node_modules/.cache/babel-loader/
+		// directory for faster rebuilds.
+		cacheDirectory: true,
 		babelrc: false,
 		presets: [require.resolve('babel-preset-react-app')],
-		plugins: [['babel-plugin-import', config.babelImportOptions]],
-		// @remove-on-eject-end
-		compact: true,
-	},
+		plugins: appConfig.extraBabelPlugins,
+		compact: true
+	}
 };
+const jsLoaderProd = jsLoaderDev;
 
-
-// ts loader
-const tsLoader = {
-	test: /\.(ts|tsx)$/,
-	include: paths.appSrc,
-	use: [
-		{
-			loader: require.resolve('ts-loader'),
-			options: {
-				transpileOnly: true,
-				getCustomTransformers: () => ({
-					before: [tsImportPluginFactory(config.babelImportOptions)]
-				})
-			}
-		}
-	]
-};
-
+// postcss loader
 const postcssLoader = {
 	loader: require.resolve('postcss-loader'),
 	options: {
@@ -93,27 +85,25 @@ const postcssLoader = {
 		plugins: () => [
 			flexBugFixes,
 			autoprefixer
-		],
-	},
+		]
+	}
 };
 
-const precssLoader = {
-	loader: require.resolve('postcss-loader'),
-	options: {
-		// Necessary for external CSS imports to work
-		// https://github.com/facebookincubator/create-react-app/issues/2677
-		// don't need now
-		// ident: 'postcss',
-		plugins: () => [
-			precss,
-			flexBugFixes,
-			autoprefixer
-		],
-	},
+const moduleCssExclude = (filePath) => {
+	if (/node_modules/.test(filePath)) {
+		return true;
+	}
+
+	if (appConfig.cssModulesExclude && appConfig.cssModulesExclude(filePath)) {
+		return true;
+	} else if (/\.module\.(css|less|sass|scss)$/.test(filePath)) {
+		return false;
+	}
+
+	return true;
 };
 
-const generateDevStyleLoader = (name, loaders) => {
-	const test = new RegExp('\\.' + name + '$'); // /\.css$/ /\.less$/ /\.scss$/
+const generateDevStyleLoader = (test, loaders) => {
 	const rawCssLoaderOptions = {
 		importLoaders: 1
 	};
@@ -127,7 +117,7 @@ const generateDevStyleLoader = (name, loaders) => {
 	].concat(loaders || []);
 
 	// disable CSS Modules
-	if (!config.useCssModules) {
+	if (!appConfig.useCssModules) {
 		return {
 			test,
 			use: styleLoaders
@@ -150,21 +140,19 @@ const generateDevStyleLoader = (name, loaders) => {
 	return {
 		test,
 		oneOf: [{
-			exclude: (filePath) => (/node_modules/.test(filePath) ? true : false),
+			exclude: moduleCssExclude,
 			use: moduleCssLoaders
 		}, {
-			include: /node_modules/,
 			use: styleLoaders
 		}]
 	};
-}
+};
 
-const generateProdStyleLoader = (name, loaders) => {
-	const test = new RegExp('\\.' + name + '$'); // /\.css$/ /\.less$/ /\.scss$/
+const generateProdStyleLoader = (test, loaders) => {
 	const rawCssLoaderOptions = {
 		importLoaders: 1,
 		minimize: true,
-		sourceMap: shouldUseSourceMap,
+		sourceMap: shouldUseSourceMap
 	};
 
 	const styleLoaders = ExtractTextPlugin.extract({
@@ -177,7 +165,7 @@ const generateProdStyleLoader = (name, loaders) => {
 	});
 
 	// disable CSS Modules
-	if (!config.useCssModules) {
+	if (!appConfig.useCssModules) {
 		return {
 			test,
 			loader: styleLoaders
@@ -201,57 +189,44 @@ const generateProdStyleLoader = (name, loaders) => {
 	return {
 		test,
 		oneOf: [{
-			exclude: (filePath) => (/node_modules/.test(filePath) ? true : false),
+			exclude: moduleCssExclude,
 			use: moduleCssLoaders
 		}, {
-			include: /node_modules/,
 			use: styleLoaders
 		}]
 	};
 };
 
 // css loader
-const cssLoaderDev = generateDevStyleLoader('css', [postcssLoader]);
-const cssLoaderProd = generateProdStyleLoader('css', [postcssLoader]);
+const cssLoaderDev = generateDevStyleLoader(/\.css$/, [postcssLoader]);
+const cssLoaderProd = generateProdStyleLoader(/\.css$/, [postcssLoader]);
 
 // scss loader
-const scssLoaderDev = generateDevStyleLoader('scss', [precssLoader]);
-const scssLoaderProd = generateProdStyleLoader('scss', [precssLoader]);
+const scssLoaders = [postcssLoader, {
+	loader: 'scss-loader',
+	options: appConfig.scss || {}
+}];
+const scssLoaderDev = generateDevStyleLoader(/\.(sass|scss)$/, scssLoaders);
+const scssLoaderProd = generateProdStyleLoader(/\.(sass|scss)$/, scssLoaders);
 
 // less loader
 const lessLoaders = [postcssLoader, {
-	loader: require.resolve('less-loader'),
-	options: config.less || {}
+	loader: 'less-loader',
+	options: appConfig.less || {}
 }];
-const lessLoaderDev = generateDevStyleLoader('less', lessLoaders);
-const lessLoaderProd = generateProdStyleLoader('less', lessLoaders);
-
-// Exclude `js` files to keep "css" loader working as it injects
-// it's runtime that would otherwise processed through "file" loader.
-// Also exclude `html` and `json` extensions so they get processed
-// by webpacks internal loaders.
-const fileLoader = {
-	loader: require.resolve('file-loader'),
-	// Exclude `js` files to keep "css" loader working as it injects
-	// it's runtime that would otherwise processed through "file" loader.
-	// Also exclude `html` and `json` extensions so they get processed
-	// by webpacks internal loaders.
-	exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/],
-	options: {
-		name: 'static/media/[name].[hash:8].[ext]',
-	},
-};
+const lessLoaderDev = generateDevStyleLoader(/\.less$/, lessLoaders);
+const lessLoaderProd = generateProdStyleLoader(/\.less$/, lessLoaders);
 
 module.exports = {
-	urlLoader,
-	jsLoader,
-	tsLoader,
+	eslintLoaderDev,
+	eslintLoaderProd,
+	jsLoaderDev,
+	jsLoaderProd,
 	cssLoaderDev,
 	cssLoaderProd,
 	scssLoaderDev,
 	scssLoaderProd,
 	lessLoaderDev,
 	lessLoaderProd,
-	fileLoader,
 	postcssLoader
 };
