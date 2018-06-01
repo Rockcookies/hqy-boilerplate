@@ -1,7 +1,7 @@
 /* eslint-disable operator-linebreak */
 const appConfig = require('./app-config');
-const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const paths = require('./paths');
+const tsImportPluginFactory = require('ts-import-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const autoprefixer = require('autoprefixer')({
@@ -32,40 +32,12 @@ const extractTextPluginOptions = shouldUseRelativeAssetPaths
 	{ publicPath: Array(cssFilename.split('/').length).join('../') }
 	: {};
 
-// eslint loader
-// TODO: Disable require.ensure as it's not a standard language feature.
-// We are waiting for https://github.com/facebookincubator/create-react-app/issues/2176.
-// { parser: { requireEnsure: false } },
-
-// First, run the linter.
-// It's important to do this before Babel processes the JS.
-const eslintLoaderDev = appConfig.useEslint && {
-	test: /\.(js|jsx|mjs)$/,
-	enforce: 'pre',
-	use: [
-		{
-			options: {
-				formatter: eslintFormatter,
-				eslintPath: require.resolve('eslint'),
-				emitWarning: true
-			},
-			loader: require.resolve('eslint-loader')
-		}
-	],
-	include: paths.appSrc
-};
-const eslintLoaderProd = eslintLoaderDev;
-
 // js loader
 const jsLoaderDev = {
 	test: /\.(js|jsx|mjs)$/,
 	include: paths.appSrc,
 	loader: require.resolve('babel-loader'),
 	options: {
-		// This is a feature of `babel-loader` for webpack (not Babel itself).
-		// It enables caching results in ./node_modules/.cache/babel-loader/
-		// directory for faster rebuilds.
-		cacheDirectory: true,
 		babelrc: false,
 		presets: [require.resolve('babel-preset-react-app')],
 		plugins: appConfig.extraBabelPlugins,
@@ -73,6 +45,35 @@ const jsLoaderDev = {
 	}
 };
 const jsLoaderProd = jsLoaderDev;
+
+// ts loader
+const tsLoaderDev = {
+	test: /\.(ts|tsx)$/,
+	include: paths.appSrc,
+	use: [{
+		loader: require.resolve('ts-loader'),
+		options: {
+			transpileOnly: true,
+			getCustomTransformers: () => ({
+				before: [tsImportPluginFactory(appConfig.tsImportPluginOptions)]
+			})
+		}
+	}]
+};
+const tsLoaderProd = {
+	test: /\.(ts|tsx)$/,
+	include: paths.appSrc,
+	use: [{
+		loader: require.resolve('ts-loader'),
+		options: {
+			transpileOnly: true,
+			configFile: paths.appTsProdConfig,
+			getCustomTransformers: () => ({
+				before: [tsImportPluginFactory(appConfig.tsImportPluginOptions)]
+			})
+		}
+	}]
+};
 
 // postcss loader
 const postcssLoader = {
@@ -218,10 +219,10 @@ const lessLoaderDev = generateDevStyleLoader(/\.less$/, lessLoaders);
 const lessLoaderProd = generateProdStyleLoader(/\.less$/, lessLoaders);
 
 module.exports = {
-	eslintLoaderDev,
-	eslintLoaderProd,
 	jsLoaderDev,
 	jsLoaderProd,
+	tsLoaderDev,
+	tsLoaderProd,
 	cssLoaderDev,
 	cssLoaderProd,
 	scssLoaderDev,

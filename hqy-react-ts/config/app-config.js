@@ -3,10 +3,19 @@ const utils = require('./utils');
 module.exports = utils.getConfig({
 	// Babel
 	extraBabelPlugins: [
-		['babel-plugin-import', [
-			{ libraryName: 'antd', style: true }
-		]]
+		['babel-plugin-import', [{
+			libraryName: 'antd',
+			libraryName: 'lib',
+			style: true
+		}]]
 	],
+
+	// Typescript
+	tsImportPluginOptions: [{
+		libraryName: 'antd',
+		libraryDirectory: 'lib',
+		style: true
+	}],
 
 	// Eslint
 	useEslint: true,
