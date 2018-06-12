@@ -15,6 +15,16 @@ module.exports = utils.getConfig({
 		libraryName: 'antd',
 		libraryDirectory: 'lib',
 		style: true
+	}, {
+		style: false,
+		libraryName: 'lodash',
+		libraryDirectory: null,
+		camel2DashComponentName: false
+	}, {
+		libraryName: 'ant-design-pro',
+		libraryDirectory: 'lib',
+		style: true,
+		camel2DashComponentName: false
 	}],
 
 	// Eslint
@@ -44,8 +54,26 @@ module.exports = utils.getConfig({
 	// Alias
 	alias: {},
 
+	// Commons
+	commons: [{
+		name: 'vendor',
+		minChunks(module) {
+			return (
+				module.resource &&
+				/\.js$/.test(module.resource) &&
+				module.resource.indexOf(utils.resolve('node_modules')) === 0
+			);
+		}
+	}, {
+		name: 'app',
+		async: 'vendor-async',
+		children: true,
+		minChunks: 3
+	}],
+
 	// Define
 	define: {
+		API_PATH: '/api',
 		PORTAL_LOGO: 'Hqy Console',
 		PORTAL_COPYRIGHT: `${new Date().getFullYear()} hqy-console framework`,
 		PORTAL_LINKS: [{
@@ -68,7 +96,12 @@ module.exports = utils.getConfig({
 	devServer: {
 		autoOpenBrowser: false,
 		disableHostCheck: true,
-		proxy: null
+		/* proxy: {
+			'/api/*': {
+				target: 'http://localhost:7001',
+				changeOrigin: true
+			}
+		} */
 	},
 
 	env: {
